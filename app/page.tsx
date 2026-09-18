@@ -17,42 +17,45 @@ export interface Task {
     comments: string[];
 }
 
-// Выносим основную логику в отдельный компонент
 function TasksContent() {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    // Состояния данных и UI
     const [tasks, setTasks] = useState<Task[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Состояния фильтров — берем начальные значения из URL параметров
+    // Фильтры
     const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
     const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "Все");
     const [sortOrder, setSortOrder] = useState<"newest" | "oldest">(
         (searchParams.get("sort") as "newest" | "oldest") || "newest"
     );
 
-    // Загрузка данных при монтировании
+    // Модальное окно и форма
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [formTitle, setFormTitle] = useState("");
+    const [formDescription, setFormDescription] = useState("");
+    const [formAssignee, setFormAssignee] = useState("");
+    const [formPriority, setFormPriority] = useState<"Низкий" | "Средний" | "Высокий">("Средний");
+
+    // Загрузка через новый API
     useEffect(() => {
         const loadScheduleData = async () => {
             try {
                 setIsLoading(true);
                 setError(null);
 
-                const response = await fetch('/tasks.json');
-
-                if (!response.ok) {
-                    throw new Error(`Ошибка HTTP: ${response.status}`);
-                }
+                const response = await fetch('/api/tasks');
+                if (!response.ok) throw new Error(`Ошибка HTTP: ${response.status}`);
 
                 const data = await response.json();
                 setTasks(data);
             } catch (err) {
                 console.error('Ошибка загрузки данных:', err);
-                setError('Не удалось загрузить список задач. Пожалуйста, попробуйте позже.');
+                setError('Не удалось загрузить список задач.');
             } finally {
                 setIsLoading(false);
             }
@@ -61,22 +64,55 @@ function TasksContent() {
         loadScheduleData();
     }, []);
 
-    // Синхронизация фильтров с URL
+    // Синхронизация URL
     useEffect(() => {
         const params = new URLSearchParams();
-
-        // Добавляем параметры только если они отличаются от значений по умолчанию
         if (searchQuery) params.set("q", searchQuery);
         if (statusFilter !== "Все") params.set("status", statusFilter);
         if (sortOrder !== "newest") params.set("sort", sortOrder);
 
         const query = params.toString();
-        const newUrl = query ? `${pathname}?${query}` : pathname;
-
-        // Используем replace, чтобы не засорять историю браузера на каждый чих
-        // { scroll: false } предотвращает прыжок страницы наверх при обновлении URL
-        router.replace(newUrl, { scroll: false });
+        router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
     }, [searchQuery, statusFilter, sortOrder, pathname, router]);
+
+    // Обработка отправки формы (POST)
+    const handleCreateTask = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!formTitle.trim() || !formAssignee.trim()) return;
+
+        try {
+            setIsSubmitting(true);
+            const response = await fetch('/api/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: formTitle,
+                    description: formDescription,
+                    assignee: formAssignee,
+                    priority: formPriority,
+                }),
+            });
+
+            if (!response.ok) throw new Error("Не удалось создать задачу");
+
+            const newTask = await response.json();
+
+            // Обновляем список локально
+            setTasks((prev) => [newTask, ...prev]);
+
+            // Сбрасываем форму и закрываем окно
+            setFormTitle("");
+            setFormDescription("");
+            setFormAssignee("");
+            setFormPriority("Средний");
+            setIsModalOpen(false);
+        } catch (err) {
+            console.error("Ошибка при создании задачи:", err);
+            alert("Произошла ошибка при сохранении задачи");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const filteredAndSortedTasks = useMemo(() => {
         return tasks
@@ -96,20 +132,24 @@ function TasksContent() {
 
     const getStatusClass = (status: Task["status"]) => {
         switch (status) {
-            case "Новая":
-                return `${styles.statusBadge} ${styles.new}`;
-            case "В работе":
-                return `${styles.statusBadge} ${styles.inProgress}`;
-            case "Выполнена":
-                return `${styles.statusBadge} ${styles.completed}`;
-            default:
-                return styles.statusBadge;
+            case "Новая": return `${styles.statusBadge} ${styles.new}`;
+            case "В работе": return `${styles.statusBadge} ${styles.inProgress}`;
+            case "Выполнена": return `${styles.statusBadge} ${styles.completed}`;
+            default: return styles.statusBadge;
         }
     };
 
     return (
         <main className={styles.container}>
-            <h1 className={styles.title}>Список задач</h1>
+            <div className={styles.headerRow}>
+                <h1 className={styles.title}>Список задач</h1>
+                <button
+                    className={styles.createBtn}
+                    onClick={() => setIsModalOpen(true)}
+                >
+                    + Добавить задачу
+                </button>
+            </div>
 
             <section className={styles.controls} aria-label="Фильтры и поиск">
                 <div className={styles.filterGroup}>
@@ -175,6 +215,8 @@ function TasksContent() {
                                 <div className={styles.taskMeta}>
                                     <span>Приоритет: <strong>{task.priority}</strong></span>
                                     <span>•</span>
+                                    <span>Исполнитель: {task.assignee}</span>
+                                    <span>•</span>
                                     <span>Дата: {new Date(task.createdAt).toLocaleDateString("ru-RU")}</span>
                                 </div>
                             </li>
@@ -182,11 +224,82 @@ function TasksContent() {
                     </ul>
                 )}
             </section>
+
+            {/* Модальное окно с формой добавления */}
+            {isModalOpen && (
+                <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="modal-title">
+                    <div className={styles.modalContent}>
+                        <h2 id="modal-title">Новая задача</h2>
+                        <form onSubmit={handleCreateTask}>
+                            <div className={styles.formGroup}>
+                                <label htmlFor="task-title">Название *</label>
+                                <input
+                                    id="task-title"
+                                    type="text"
+                                    required
+                                    value={formTitle}
+                                    onChange={(e) => setFormTitle(e.target.value)}
+                                />
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label htmlFor="task-assignee">Исполнитель *</label>
+                                <input
+                                    id="task-assignee"
+                                    type="text"
+                                    required
+                                    value={formAssignee}
+                                    onChange={(e) => setFormAssignee(e.target.value)}
+                                />
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label htmlFor="task-priority">Приоритет</label>
+                                <select
+                                    id="task-priority"
+                                    value={formPriority}
+                                    onChange={(e) => setFormPriority(e.target.value as "Низкий" | "Средний" | "Высокий")}
+                                >
+                                    <option value="Низкий">Низкий</option>
+                                    <option value="Средний">Средний</option>
+                                    <option value="Высокий">Высокий</option>
+                                </select>
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label htmlFor="task-desc">Описание</label>
+                                <textarea
+                                    id="task-desc"
+                                    value={formDescription}
+                                    onChange={(e) => setFormDescription(e.target.value)}
+                                />
+                            </div>
+
+                            <div className={styles.formActions}>
+                                <button
+                                    type="button"
+                                    className={styles.cancelBtn}
+                                    onClick={() => setIsModalOpen(false)}
+                                    disabled={isSubmitting}
+                                >
+                                    Отмена
+                                </button>
+                                <button
+                                    type="submit"
+                                    className={styles.submitBtn}
+                                    disabled={isSubmitting}
+                                >
+                                    {isSubmitting ? "Сохранение..." : "Создать"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </main>
     );
 }
 
-// Экспортируем страницу, обернутую в Suspense
 export default function HomePage() {
     return (
         <Suspense fallback={<div style={{ textAlign: 'center', padding: '2rem' }}>Загрузка интерфейса...</div>}>

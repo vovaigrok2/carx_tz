@@ -2,44 +2,32 @@
 
 .container {
     max-width: 800px;
-    width: 100%;
-    margin: 2rem auto;
-    padding: 0 1rem;
-    box-sizing: border-box;
-
-    .mobile( {
-        margin: 1rem auto;
-        padding: 0 0.75rem;
-    }
-
-    );
+    margin: 0 auto;
+    padding: 2rem 1rem;
 }
 
-.backNav {
+.navigation {
     margin-bottom: 1.5rem;
+}
 
-    a {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-weight: 500;
+.backLink {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+
+    &:hover {
+        text-decoration: underline;
     }
 }
 
-.card {
+.taskDetail {
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: @border-radius;
     padding: 2rem;
-    width: 100%;
-    box-sizing: border-box;
-    overflow: hidden; // Предотвращает выпадение элементов за пределы карточки
-
-    .mobile( {
-        padding: 1rem;
-    }
-
-    );
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .header {
@@ -47,138 +35,161 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 1rem;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
     border-bottom: 1px solid var(--border-color);
-
-    .mobile( {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
-    }
-
-    );
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
 
     .title {
         font-size: 1.75rem;
-        color: var(--text-primary);
-        word-break: break-word; // Защита от переполнения длинными словами
-
-        .mobile( {
-            font-size: 1.25rem;
-            line-height: 1.3;
-        }
-
-        );
-    }
-}
-
-// Понятная и адаптивная структура списков свойств
-.grid {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    margin-bottom: 2rem;
-    width: 100%;
-}
-
-.gridItem {
-    display: flex;
-    flex-direction: row;
-    align-items: baseline;
-    gap: 1rem;
-    width: 100%;
-
-    dt {
-        width: 180px;
-        flex-shrink: 0;
-        font-weight: 600;
-        color: var(--text-secondary);
-        font-size: 0.95rem;
-    }
-
-    dd {
-        flex: 1;
+        line-height: 1.3;
         margin: 0;
-        color: var(--text-primary);
-        word-break: break-word;
-        overflow-wrap: anywhere;
     }
 }
 
-// Прямой медиазапрос без миксинов надежно работает во всех браузерах и CSS-модулях
-@media screen and (max-width: 640px) {
-    .gridItem {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.25rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 1px dashed var(--border-color);
+.statusControl {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
 
-        &:last-child {
-            border-bottom: none;
-        }
+    label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
 
-        dt {
-            width: 100%;
-            font-size: 0.85rem;
-        }
-
-        dd {
-            width: 100%;
-            font-size: 0.95rem;
-        }
+    select {
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
     }
 }
 
 .statusBadge {
-    display: inline-block;
-    padding: 0.25rem 0.6rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    white-space: nowrap;
-    max-width: 100%;
-
     &.new {
-        background-color: var(--status-new-bg);
-        color: var(--status-new-text);
+        background-color: #e3f2fd;
+        color: #1976d2;
+        border: 1px solid #bbdefb;
     }
 
     &.inProgress {
-        background-color: var(--status-progress-bg);
-        color: var(--status-progress-text);
+        background-color: #fff3e0;
+        color: #f57c00;
+        border: 1px solid #ffe0b2;
     }
 
     &.completed {
-        background-color: var(--status-completed-bg);
-        color: var(--status-completed-text);
+        background-color: #e8f5e9;
+        color: #388e3c;
+        border: 1px solid #c8e6c9;
     }
 }
 
-.commentsSection {
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--border-color);
+.metaGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    background-color: var(--bg-color);
+    padding: 1rem;
+    border-radius: @border-radius;
+    margin-bottom: 2rem;
+
+    .metaItem {
+        dt {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        dd {
+            margin: 0;
+            font-weight: 500;
+        }
+    }
+}
+
+.section {
+    margin-bottom: 2rem;
 
     h2 {
         font-size: 1.25rem;
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.4rem;
+    }
+}
+
+.description, .resultText {
+    line-height: 1.6;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+}
+
+.commentList {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.commentItem {
+    background-color: var(--bg-color);
+    padding: 0.8rem 1rem;
+    border-radius: @border-radius;
+    border-left: 3px solid var(--accent);
+}
+
+.noComments {
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-bottom: 1.5rem;
+}
+
+.commentForm {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    textarea {
+        width: 100%;
+        min-height: 80px;
+        padding: 0.75rem;
+        resize: vertical;
+        font-family: inherit;
     }
 
-    .commentList {
-        list-style: none;
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
+    .sendBtn {
+        align-self: flex-end;
+        padding: 0.5rem 1.5rem;
+        background-color: var(--accent);
+        color: #ffffff;
+        border: none;
+        border-radius: @border-radius;
+        cursor: pointer;
 
-        .commentItem {
-            background-color: var(--bg-color);
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--border-color);
-            border-radius: @border-radius;
-            font-size: 0.95rem;
-            word-break: break-word;
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
     }
+}
+
+.srOnly {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.loadingMessage, .errorBox {
+    text-align: center;
+    padding: 3rem 1rem;
 }
