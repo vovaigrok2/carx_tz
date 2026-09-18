@@ -39,6 +39,19 @@ export default function HomePage() {
             });
     }, [tasks, searchQuery, statusFilter, sortOrder]);
 
+    const getStatusClass = (status: Task["status"]) => {
+        switch (status) {
+            case "Новая":
+                return `${styles.statusBadge} ${styles.new}`;
+            case "В работе":
+                return `${styles.statusBadge} ${styles.inProgress}`;
+            case "Выполнена":
+                return `${styles.statusBadge} ${styles.completed}`;
+            default:
+                return styles.statusBadge;
+        }
+    };
+
     return (
         <main className={styles.container}>
             <h1 className={styles.title}>Список задач</h1>
@@ -85,7 +98,7 @@ export default function HomePage() {
             <section aria-label="Список задач">
                 {filteredAndSortedTasks.length === 0 ? (
                     <p>Задачи не найдены.</p>
-                ) : (
+                ) : (   
                     <ul className={styles.taskList}>
                         {filteredAndSortedTasks.map((task) => (
                             <li key={task.id} className={styles.taskCard}>
@@ -93,10 +106,13 @@ export default function HomePage() {
                                     <Link href={`/tasks/${task.id}`} className={styles.taskTitle}>
                                         {task.title}
                                     </Link>
+                                    <span className={getStatusClass(task.status)}>
+                                        {task.status}
+                                    </span>
                                 </div>
                                 <div className={styles.taskMeta}>
-                                    <span>Статус: <strong className={styles.status}>{task.status}</strong></span>
-                                    <span>Приоритет: {task.priority}</span>
+                                    <span>Приоритет: <strong>{task.priority}</strong></span>
+                                    <span>•</span>
                                     <span>Дата: {new Date(task.createdAt).toLocaleDateString("ru-RU")}</span>
                                 </div>
                             </li>

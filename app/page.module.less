@@ -4,12 +4,26 @@
     max-width: 800px;
     margin: 2rem auto;
     padding: 0 1rem;
+
+    .mobile( {
+        margin: 1rem auto;
+        padding: 0 0.75rem;
+    }
+
+    );
 }
 
 .title {
     font-size: 2rem;
     margin-bottom: 1.5rem;
     color: var(--text-primary);
+
+    .mobile( {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    );
 }
 
 .controls {
@@ -21,6 +35,14 @@
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: @border-radius;
+
+    .mobile( {
+        flex-direction: column;
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+
+    );
 
     .filterGroup {
         display: flex;
@@ -37,6 +59,7 @@
 
         input, select {
             padding: 0.6rem;
+            width: 100%;
         }
     }
 }
@@ -63,24 +86,60 @@
     .taskHeader {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap; // Разрешаем перенос, если заголовок и статус не влезают вместе
 
         .taskTitle {
             font-size: 1.25rem;
             font-weight: 600;
+            word-break: break-word;
+            flex: 1 1 200px; // Заголовок стремится занять место, но сжимается при необходимости
         }
     }
 
     .taskMeta {
         display: flex;
         gap: 1rem;
+        align-items: center;
         font-size: 0.875rem;
         color: var(--text-secondary);
+        flex-wrap: wrap;
 
-        .status {
-            color: var(--accent);
-            font-weight: 600;
+        .mobile( {
+            gap: 0.5rem;
+            font-size: 0.8rem;
         }
+
+        );
     }
 }
+
+// Стиль плашки статуса
+.statusBadge {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    align-self: flex-start;
+
+    &.new {
+        background-color: var(--status-new-bg);
+        color: var(--status-new-text);
+    }
+
+    &.inProgress {
+        background-color: var(--status-progress-bg);
+        color: var(--status-progress-text);
+    }
+
+    &.completed {
+        background-color: var(--status-completed-bg);
+        color: var(--status-completed-text);
+    }
+}
+
+

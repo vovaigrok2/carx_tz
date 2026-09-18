@@ -2,6 +2,7 @@
 import { notFound } from "next/navigation";
 import tasksData from "../../data/tasks.json";
 import { Task } from "../../page";
+import styles from "./task.module.less";
 
 interface TaskPageProps {
     params: Promise<{ id: string }>;
@@ -11,15 +12,12 @@ export default async function TaskDetailPage({ params }: TaskPageProps) {
     const { id } = await params;
     const tasks: Task[] = tasksData as Task[];
 
-    // Находим задачу по id
     const task = tasks.find((t) => t.id === id);
 
-    // Если задача не найдена, отдаем 404
     if (!task) {
         notFound();
     }
 
-    // Форматируем дату для удобного отображения
     const formattedDate = new Date(task.createdAt).toLocaleDateString("ru-RU", {
         year: "numeric",
         month: "long",
@@ -28,43 +26,70 @@ export default async function TaskDetailPage({ params }: TaskPageProps) {
         minute: "2-digit",
     });
 
+    const getStatusClass = (status: Task["status"]) => {
+        switch (status) {
+            case "Новая":
+                return `${styles.statusBadge} ${styles.new}`;
+            case "В работе":
+                return `${styles.statusBadge} ${styles.inProgress}`;
+            case "Выполнена":
+                return `${styles.statusBadge} ${styles.completed}`;
+            default:
+                return styles.statusBadge;
+        }
+    };
+
     return (
-        <main style={{ padding: "2rem", fontFamily: "sans-serif", maxWidth: "800px" }}>
-            <nav style={{ marginBottom: "1.5rem" }}>
+        <main className={styles.container}>
+            <nav className={styles.backNav}>
                 <Link href="/">← Назад к списку задач</Link>
             </nav>
 
-            <article>
-                <h1>{task.title}</h1>
+            <article className={styles.card}>
+                <header className={styles.header}>
+                    <h1 className={styles.title}>{task.title}</h1>
+                    <span className={getStatusClass(task.status)}>
+                        {task.status}
+                    </span>
+                </header>
 
-                <dl style={{ display: "grid", gridTemplateColumns: "180px 1fr", gap: "0.75rem", margin: "1.5rem 0" }}>
-                    <dt><strong>Статус:</strong></dt>
-                    <dd>{task.status}</dd>
+                <dl className={styles.grid}>
+                    <div className={styles.gridItem}>
+                        <dt>Приоритет:</dt>
+                        <dd>{task.priority}</dd>
+                    </div>
 
-                    <dt><strong>Приоритет:</strong></dt>
-                    <dd>{task.priority}</dd>
+                    <div className={styles.gridItem}>
+                        <dt>Ответственный:</dt>
+                        <dd>{task.assignee}</dd>
+                    </div>
 
-                    <dt><strong>Ответственный:</strong></dt>
-                    <dd>{task.assignee}</dd>
+                    <div className={styles.gridItem}>
+                        <dt>Дата создания:</dt>
+                        <dd>{formattedDate}</dd>
+                    </div>
 
-                    <dt><strong>Дата создания:</strong></dt>
-                    <dd>{formattedDate}</dd>
+                    <div className={styles.gridItem}>
+                        <dt>Описание:</dt>
+                        <dd>{task.description}</dd>
+                    </div>
 
-                    <dt><strong>Описание:</strong></dt>
-                    <dd>{task.description}</dd>
-
-                    <dt><strong>Результат:</strong></dt>
-                    <dd>{task.result || "Не указан"}</dd>
+                    <div className={styles.gridItem}>
+                        <dt>Результат:</dt>
+                        <dd>{task.result || "Не указан"}</dd>
+                    </div>
                 </dl>
 
-                <section aria-labelledby="comments-heading">
-                    <h2 id="comments-heading">Комментарии</h2>
+                <section className={styles.commentsSection} aria-labelledby="comments-heading">
+                    <h2 id="comments-heading">Комментарии ({task.comments.length})</h2>
                     {task.comments.length === 0 ? (
-                        <p>Комментариев пока нет.</p>
+                        <p style={{ color: "var(--text-secondary)" }}>Комментариев пока нет.</p>
                     ) : (
-                        <ul>
+                        <ul className={styles.commentList}>
                             {task.comments.map((comment, index) => (
-                                <li key={index}>{comment}</li>
+                                <li key={index} className={styles.commentItem}>
+                                    {comment}
+                                </li>
                             ))}
                         </ul>
                     )}
