@@ -1,8 +1,8 @@
 ﻿'use client';
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
-import initialTasks from "./data/tasks.json";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import styles from "./page.module.less";
 
 export interface Task {
@@ -17,11 +17,66 @@ export interface Task {
     comments: string[];
 }
 
-export default function HomePage() {
-    const [tasks] = useState<Task[]>(initialTasks as Task[]);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [statusFilter, setStatusFilter] = useState<string>("Все");
-    const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+// Выносим основную логику в отдельный компонент
+function TasksContent() {
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+
+    // Состояния данных и UI
+    const [tasks, setTasks] = useState<Task[]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Состояния фильтров — берем начальные значения из URL параметров
+    const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
+    const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "Все");
+    const [sortOrder, setSortOrder] = useState<"newest" | "oldest">(
+        (searchParams.get("sort") as "newest" | "oldest") || "newest"
+    );
+
+    // Загрузка данных при монтировании
+    useEffect(() => {
+        const loadScheduleData = async () => {
+            try {
+                setIsLoading(true);
+                setError(null);
+
+                const response = await fetch('/tasks.json');
+
+                if (!response.ok) {
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+
+                const data = await response.json();
+                setTasks(data);
+            } catch (err) {
+                console.error('Ошибка загрузки данных:', err);
+                setError('Не удалось загрузить список задач. Пожалуйста, попробуйте позже.');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadScheduleData();
+    }, []);
+
+    // Синхронизация фильтров с URL
+    useEffect(() => {
+        const params = new URLSearchParams();
+
+        // Добавляем параметры только если они отличаются от значений по умолчанию
+        if (searchQuery) params.set("q", searchQuery);
+        if (statusFilter !== "Все") params.set("status", statusFilter);
+        if (sortOrder !== "newest") params.set("sort", sortOrder);
+
+        const query = params.toString();
+        const newUrl = query ? `${pathname}?${query}` : pathname;
+
+        // Используем replace, чтобы не засорять историю браузера на каждый чих
+        // { scroll: false } предотвращает прыжок страницы наверх при обновлении URL
+        router.replace(newUrl, { scroll: false });
+    }, [searchQuery, statusFilter, sortOrder, pathname, router]);
 
     const filteredAndSortedTasks = useMemo(() => {
         return tasks
@@ -65,6 +120,7 @@ export default function HomePage() {
                         placeholder="Введите название..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        disabled={isLoading || !!error}
                     />
                 </div>
 
@@ -74,6 +130,7 @@ export default function HomePage() {
                         id="status-select"
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
+                        disabled={isLoading || !!error}
                     >
                         <option value="Все">Все статусы</option>
                         <option value="Новая">Новая</option>
@@ -88,6 +145,7 @@ export default function HomePage() {
                         id="sort-select"
                         value={sortOrder}
                         onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest")}
+                        disabled={isLoading || !!error}
                     >
                         <option value="newest">Сначала новые</option>
                         <option value="oldest">Сначала старые</option>
@@ -96,9 +154,13 @@ export default function HomePage() {
             </section>
 
             <section aria-label="Список задач">
-                {filteredAndSortedTasks.length === 0 ? (
+                {isLoading ? (
+                    <p className={styles.loadingMessage}>Загрузка задач...</p>
+                ) : error ? (
+                    <p className={styles.errorMessage}>{error}</p>
+                ) : filteredAndSortedTasks.length === 0 ? (
                     <p>Задачи не найдены.</p>
-                ) : (   
+                ) : (
                     <ul className={styles.taskList}>
                         {filteredAndSortedTasks.map((task) => (
                             <li key={task.id} className={styles.taskCard}>
@@ -121,5 +183,14 @@ export default function HomePage() {
                 )}
             </section>
         </main>
+    );
+}
+
+// Экспортируем страницу, обернутую в Suspense
+export default function HomePage() {
+    return (
+        <Suspense fallback={<div style={{ textAlign: 'center', padding: '2rem' }}>Загрузка интерфейса...</div>}>
+            <TasksContent />
+        </Suspense>
     );
 }
