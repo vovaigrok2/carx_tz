@@ -1,7 +1,7 @@
 ﻿import styles from "./StatusBadge.module.less";
 
 interface StatusBadgeProps {
-    status: "Новая" | "В работе" | "Выполнена" | string;
+    status: "Новая" | "В\u00A0работе" | "Выполнена" | string;
 }
 
 export default function StatusBadge({ status }: StatusBadgeProps) {
