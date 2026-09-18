@@ -1,24 +1,20 @@
 ﻿import styles from "./StatusBadge.module.less";
 
-export type TaskStatus = "Новая" | "В работе" | "Выполнена";
-
 interface StatusBadgeProps {
-    status: TaskStatus;
-    className?: string;
+    status: "Новая" | "В работе" | "Выполнена" | string;
 }
 
-export default function StatusBadge({ status, className = "" }: StatusBadgeProps) {
-    const getStatusClass = (s: TaskStatus) => {
-        switch (s) {
-            case "Новая": return styles.new;
-            case "В работе": return styles.inProgress;
-            case "Выполнена": return styles.completed;
-            default: return "";
-        }
-    };
+export default function StatusBadge({ status }: StatusBadgeProps) {
+    let statusClass = styles.new;
+
+    if (status === "В работе") {
+        statusClass = styles.inProgress;
+    } else if (status === "Выполнена") {
+        statusClass = styles.completed;
+    }
 
     return (
-        <span className={`${styles.statusBadge} ${getStatusClass(status)} ${className}`}>
+        <span className={`${styles.badge} ${statusClass}`}>
             {status}
         </span>
     );

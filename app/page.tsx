@@ -37,6 +37,17 @@ function TasksContent() {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    // Синхронизация фильтров с URL
+    useEffect(() => {
+        const params = new URLSearchParams();
+        if (searchQuery) params.set("q", searchQuery);
+        if (statusFilter !== "Все") params.set("status", statusFilter);
+        if (sortOrder !== "newest") params.set("sort", sortOrder);
+
+        const query = params.toString();
+        router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    }, [searchQuery, statusFilter, sortOrder, pathname, router]);
+
     useEffect(() => {
         const loadScheduleData = async () => {
             try {
@@ -49,7 +60,6 @@ function TasksContent() {
                 const data = await response.json();
                 setTasks(data);
             } catch (err) {
-                console.error('Ошибка загрузки данных:', err);
                 setError('Не удалось загрузить список задач.');
             } finally {
                 setIsLoading(false);
@@ -58,16 +68,6 @@ function TasksContent() {
 
         loadScheduleData();
     }, []);
-
-    useEffect(() => {
-        const params = new URLSearchParams();
-        if (searchQuery) params.set("q", searchQuery);
-        if (statusFilter !== "Все") params.set("status", statusFilter);
-        if (sortOrder !== "newest") params.set("sort", sortOrder);
-
-        const query = params.toString();
-        router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-    }, [searchQuery, statusFilter, sortOrder, pathname, router]);
 
     const handleCreateTask = async (payload: NewTaskPayload) => {
         const response = await fetch('/api/tasks', {

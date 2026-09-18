@@ -14,7 +14,7 @@ async function getTasksFromFile(): Promise<Task[]> {
     }
 }
 
-// GET /api/tasks/[id] — получение конкретной задачи
+// GET /api/tasks/[id]
 export async function GET(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
@@ -30,12 +30,11 @@ export async function GET(
 
         return NextResponse.json(task);
     } catch (error) {
-        console.error("Ошибка при получении задачи:", error);
         return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });
     }
 }
 
-// PATCH /api/tasks/[id] — обновление полей задачи (статус, комментарии и т.д.)
+// PATCH /api/tasks/[id]
 export async function PATCH(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
@@ -57,7 +56,28 @@ export async function PATCH(
 
         return NextResponse.json(updatedTask);
     } catch (error) {
-        console.error("Ошибка при обновлении задачи:", error);
         return NextResponse.json({ error: "Не удалось обновить задачу" }, { status: 500 });
+    }
+}
+
+// DELETE /api/tasks/[id] — удаление задачи
+export async function DELETE(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params;
+        const tasks = await getTasksFromFile();
+        const filteredTasks = tasks.filter((t) => t.id !== id);
+
+        if (tasks.length === filteredTasks.length) {
+            return NextResponse.json({ error: "Задача не найдена" }, { status: 404 });
+        }
+
+        await fs.writeFile(filePath, JSON.stringify(filteredTasks, null, 2), "utf-8");
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        return NextResponse.json({ error: "Не удалось удалить задачу" }, { status: 500 });
     }
 }

@@ -49,20 +49,59 @@
 .statusControl {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    white-space: nowrap;
+}
 
-    label {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
+.statusSelect {
+    padding: 0.4rem 0.85rem;
+    border-radius: 16px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+    /* Стилизация под статус в светлой теме */
+    &[data-status="Новая"] {
+        background-color: #e3f2fd;
+        color: #1976d2;
+        border-color: #bbdefb;
     }
 
-    select {
-        padding: 0.4rem 0.8rem;
-        border-radius: 20px;
-        font-weight: 600;
-        font-size: 0.875rem;
-        cursor: pointer;
+    &[data-status="В работе"] {
+        background-color: #fff3e0;
+        color: #f57c00;
+        border-color: #ffe0b2;
+    }
+
+    &[data-status="Выполнена"] {
+        background-color: #e8f5e9;
+        color: #388e3c;
+        border-color: #c8e6c9;
+    }
+    /* Поддержка тёмной темы */
+    :global([data-theme="dark"]) & {
+        &[data-status="Новая"] {
+            background-color: rgba(25, 118, 210, 0.2);
+            color: #90caf9;
+            border-color: rgba(25, 118, 210, 0.4);
+        }
+
+        &[data-status="В работе"] {
+            background-color: rgba(245, 124, 0, 0.2);
+            color: #ffb74d;
+            border-color: rgba(245, 124, 0, 0.4);
+        }
+
+        &[data-status="Выполнена"] {
+            background-color: rgba(56, 142, 60, 0.2);
+            color: #81c784;
+            border-color: rgba(56, 142, 60, 0.4);
+        }
+    }
+    /* Выпадающие пункты остаются разборчивыми */
+    option {
+        background-color: var(--card-bg, #ffffff);
+        color: var(--text-primary, #333333);
     }
 }
 
@@ -192,4 +231,29 @@
 .loadingMessage, .errorBox {
     text-align: center;
     padding: 3rem 1rem;
+}
+.navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.deleteTaskBtn {
+    background-color: transparent;
+    color: #d32f2f;
+    border: 1px solid #ef9a9a;
+    padding: 0.4rem 0.8rem;
+    border-radius: @border-radius;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+        background-color: #ffebee;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
 }

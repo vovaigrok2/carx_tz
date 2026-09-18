@@ -2,8 +2,8 @@
 
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Task } from "@/app/page";
-import StatusBadge from "@/components/StatusBadge/StatusBadge";
 import styles from "./task.module.less";
 
 interface TaskPageProps {
@@ -12,6 +12,7 @@ interface TaskPageProps {
 
 export default function TaskPage({ params }: TaskPageProps) {
     const { id } = use(params);
+    const router = useRouter();
 
     const [task, setTask] = useState<Task | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +43,21 @@ export default function TaskPage({ params }: TaskPageProps) {
 
         fetchTask();
     }, [id]);
+
+    const handleDelete = async () => {
+        if (!confirm("Вы уверены, что хотите удалить эту задачу?")) return;
+
+        try {
+            setIsUpdating(true);
+            const response = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+            if (!response.ok) throw new Error("Не удалось удалить задачу");
+
+            router.push("/");
+        } catch (err) {
+            alert("Ошибка при удалении задачи");
+            setIsUpdating(false);
+        }
+    };
 
     const handleStatusChange = async (newStatus: Task["status"]) => {
         if (!task || isUpdating) return;
@@ -118,16 +134,24 @@ export default function TaskPage({ params }: TaskPageProps) {
                 <Link href="/" className={styles.backLink}>
                     ← Вернуться к списку задач
                 </Link>
+                <button
+                    onClick={handleDelete}
+                    disabled={isUpdating}
+                    className={styles.deleteTaskBtn}
+                >
+                    Удалить задачу
+                </button>
             </nav>
 
             <article className={styles.taskDetail}>
                 <header className={styles.header}>
                     <h1 className={styles.title}>{task.title}</h1>
                     <div className={styles.statusControl}>
-                        <StatusBadge status={task.status} />
                         <label htmlFor="status-change" className={styles.srOnly}>Изменить статус</label>
                         <select
                             id="status-change"
+                            className={styles.statusSelect}
+                            data-status={task.status}
                             value={task.status}
                             onChange={(e) => handleStatusChange(e.target.value as Task["status"])}
                             disabled={isUpdating}
