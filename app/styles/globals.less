@@ -1,0 +1,49 @@
+﻿@import './variables.less';
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    min-height: 100vh;
+}
+
+a {
+    color: var(--accent);
+    text-decoration: none;
+
+    &:hover {
+        color: var(--accent-hover);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+}
+
+// Семантические элементы формы
+input, select, button {
+    font-family: inherit;
+    font-size: 1rem;
+    border-radius: @border-radius;
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        border-color: transparent;
+    }
+}
+
+button {
+    cursor: pointer;
+}

@@ -1,7 +1,19 @@
-import type { NextConfig } from "next";
+﻿import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+    reactStrictMode: true,
+    turbopack: {
+        rules: {
+            "*.module.less": {
+                loaders: ["less-loader"],
+                as: "*.module.css",
+            },
+            "*.less": {
+                loaders: ["less-loader"],
+                as: "*.css",
+            },
+        },
+    },
 };
 
 export default nextConfig;
