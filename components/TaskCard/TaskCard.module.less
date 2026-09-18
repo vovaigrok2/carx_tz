@@ -1,0 +1,41 @@
+﻿@import "../../app/styles/variables.less";
+
+.taskCard {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: @border-radius;
+    padding: 1.25rem;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+}
+
+.taskHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.taskTitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-decoration: none;
+
+    &:hover {
+        color: var(--accent);
+    }
+}
+
+.taskMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}

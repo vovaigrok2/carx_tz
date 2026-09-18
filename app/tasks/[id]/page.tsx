@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { Task } from "@/app/page";
+import StatusBadge from "@/components/StatusBadge/StatusBadge";
 import styles from "./task.module.less";
 
 interface TaskPageProps {
@@ -15,12 +16,9 @@ export default function TaskPage({ params }: TaskPageProps) {
     const [task, setTask] = useState<Task | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    // Состояние для нового комментария
     const [commentText, setCommentText] = useState("");
     const [isUpdating, setIsUpdating] = useState(false);
 
-    // Загрузка задачи
     useEffect(() => {
         const fetchTask = async () => {
             try {
@@ -29,9 +27,7 @@ export default function TaskPage({ params }: TaskPageProps) {
 
                 const response = await fetch(`/api/tasks/${id}`);
                 if (!response.ok) {
-                    if (response.status === 404) {
-                        throw new Error("Задача не найдена");
-                    }
+                    if (response.status === 404) throw new Error("Задача не найдена");
                     throw new Error("Ошибка при загрузке задачи");
                 }
 
@@ -47,7 +43,6 @@ export default function TaskPage({ params }: TaskPageProps) {
         fetchTask();
     }, [id]);
 
-    // Обновление статуса задачи
     const handleStatusChange = async (newStatus: Task["status"]) => {
         if (!task || isUpdating) return;
 
@@ -70,7 +65,6 @@ export default function TaskPage({ params }: TaskPageProps) {
         }
     };
 
-    // Добавление нового комментария
     const handleAddComment = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!task || !commentText.trim() || isUpdating) return;
@@ -94,15 +88,6 @@ export default function TaskPage({ params }: TaskPageProps) {
             alert("Ошибка при добавлении комментария");
         } finally {
             setIsUpdating(false);
-        }
-    };
-
-    const getStatusClass = (status: Task["status"]) => {
-        switch (status) {
-            case "Новая": return `${styles.statusBadge} ${styles.new}`;
-            case "В работе": return `${styles.statusBadge} ${styles.inProgress}`;
-            case "Выполнена": return `${styles.statusBadge} ${styles.completed}`;
-            default: return styles.statusBadge;
         }
     };
 
@@ -139,13 +124,13 @@ export default function TaskPage({ params }: TaskPageProps) {
                 <header className={styles.header}>
                     <h1 className={styles.title}>{task.title}</h1>
                     <div className={styles.statusControl}>
-                        <label htmlFor="status-change">Статус:</label>
+                        <StatusBadge status={task.status} />
+                        <label htmlFor="status-change" className={styles.srOnly}>Изменить статус</label>
                         <select
                             id="status-change"
                             value={task.status}
                             onChange={(e) => handleStatusChange(e.target.value as Task["status"])}
                             disabled={isUpdating}
-                            className={getStatusClass(task.status)}
                         >
                             <option value="Новая">Новая</option>
                             <option value="В работе">В работе</option>
@@ -176,22 +161,12 @@ export default function TaskPage({ params }: TaskPageProps) {
                     </p>
                 </section>
 
-                {task.result && (
-                    <section className={styles.section}>
-                        <h2>Результат выполнения</h2>
-                        <p className={styles.resultText}>{task.result}</p>
-                    </section>
-                )}
-
                 <section className={styles.section}>
                     <h2>Комментарии ({task.comments?.length || 0})</h2>
-
                     {task.comments && task.comments.length > 0 ? (
                         <ul className={styles.commentList}>
                             {task.comments.map((comment, index) => (
-                                <li key={index} className={styles.commentItem}>
-                                    {comment}
-                                </li>
+                                <li key={index} className={styles.commentItem}>{comment}</li>
                             ))}
                         </ul>
                     ) : (
@@ -199,11 +174,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                     )}
 
                     <form onSubmit={handleAddComment} className={styles.commentForm}>
-                        <label htmlFor="new-comment" className={styles.srOnly}>
-                            Добавить комментарий
-                        </label>
                         <textarea
-                            id="new-comment"
                             placeholder="Напишите комментарий..."
                             value={commentText}
                             onChange={(e) => setCommentText(e.target.value)}

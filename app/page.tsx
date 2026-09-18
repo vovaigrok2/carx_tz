@@ -1,8 +1,10 @@
 ﻿'use client';
 
 import { useState, useMemo, useEffect, Suspense } from "react";
-import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import FilterPanel from "@/components/FilterPanel/FilterPanel";
+import TaskCard from "@/components/TaskCard/TaskCard";
+import CreateTaskModal, { NewTaskPayload } from "@/components/CreateTaskModal/CreateTaskModal";
 import styles from "./page.module.less";
 
 export interface Task {
@@ -33,15 +35,8 @@ function TasksContent() {
         (searchParams.get("sort") as "newest" | "oldest") || "newest"
     );
 
-    // Модальное окно и форма
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [formTitle, setFormTitle] = useState("");
-    const [formDescription, setFormDescription] = useState("");
-    const [formAssignee, setFormAssignee] = useState("");
-    const [formPriority, setFormPriority] = useState<"Низкий" | "Средний" | "Высокий">("Средний");
 
-    // Загрузка через новый API
     useEffect(() => {
         const loadScheduleData = async () => {
             try {
@@ -64,7 +59,6 @@ function TasksContent() {
         loadScheduleData();
     }, []);
 
-    // Синхронизация URL
     useEffect(() => {
         const params = new URLSearchParams();
         if (searchQuery) params.set("q", searchQuery);
@@ -75,43 +69,17 @@ function TasksContent() {
         router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
     }, [searchQuery, statusFilter, sortOrder, pathname, router]);
 
-    // Обработка отправки формы (POST)
-    const handleCreateTask = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!formTitle.trim() || !formAssignee.trim()) return;
+    const handleCreateTask = async (payload: NewTaskPayload) => {
+        const response = await fetch('/api/tasks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
 
-        try {
-            setIsSubmitting(true);
-            const response = await fetch('/api/tasks', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    title: formTitle,
-                    description: formDescription,
-                    assignee: formAssignee,
-                    priority: formPriority,
-                }),
-            });
+        if (!response.ok) throw new Error("Не удалось создать задачу");
 
-            if (!response.ok) throw new Error("Не удалось создать задачу");
-
-            const newTask = await response.json();
-
-            // Обновляем список локально
-            setTasks((prev) => [newTask, ...prev]);
-
-            // Сбрасываем форму и закрываем окно
-            setFormTitle("");
-            setFormDescription("");
-            setFormAssignee("");
-            setFormPriority("Средний");
-            setIsModalOpen(false);
-        } catch (err) {
-            console.error("Ошибка при создании задачи:", err);
-            alert("Произошла ошибка при сохранении задачи");
-        } finally {
-            setIsSubmitting(false);
-        }
+        const newTask = await response.json();
+        setTasks((prev) => [newTask, ...prev]);
     };
 
     const filteredAndSortedTasks = useMemo(() => {
@@ -130,15 +98,6 @@ function TasksContent() {
             });
     }, [tasks, searchQuery, statusFilter, sortOrder]);
 
-    const getStatusClass = (status: Task["status"]) => {
-        switch (status) {
-            case "Новая": return `${styles.statusBadge} ${styles.new}`;
-            case "В работе": return `${styles.statusBadge} ${styles.inProgress}`;
-            case "Выполнена": return `${styles.statusBadge} ${styles.completed}`;
-            default: return styles.statusBadge;
-        }
-    };
-
     return (
         <main className={styles.container}>
             <div className={styles.headerRow}>
@@ -151,47 +110,15 @@ function TasksContent() {
                 </button>
             </div>
 
-            <section className={styles.controls} aria-label="Фильтры и поиск">
-                <div className={styles.filterGroup}>
-                    <label htmlFor="search-input">Поиск по названию:</label>
-                    <input
-                        id="search-input"
-                        type="text"
-                        placeholder="Введите название..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        disabled={isLoading || !!error}
-                    />
-                </div>
-
-                <div className={styles.filterGroup}>
-                    <label htmlFor="status-select">Статус:</label>
-                    <select
-                        id="status-select"
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        disabled={isLoading || !!error}
-                    >
-                        <option value="Все">Все статусы</option>
-                        <option value="Новая">Новая</option>
-                        <option value="В работе">В работе</option>
-                        <option value="Выполнена">Выполнена</option>
-                    </select>
-                </div>
-
-                <div className={styles.filterGroup}>
-                    <label htmlFor="sort-select">Сортировка по дате:</label>
-                    <select
-                        id="sort-select"
-                        value={sortOrder}
-                        onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest")}
-                        disabled={isLoading || !!error}
-                    >
-                        <option value="newest">Сначала новые</option>
-                        <option value="oldest">Сначала старые</option>
-                    </select>
-                </div>
-            </section>
+            <FilterPanel
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                statusFilter={statusFilter}
+                onStatusChange={setStatusFilter}
+                sortOrder={sortOrder}
+                onSortChange={setSortOrder}
+                disabled={isLoading || !!error}
+            />
 
             <section aria-label="Список задач">
                 {isLoading ? (
@@ -203,99 +130,17 @@ function TasksContent() {
                 ) : (
                     <ul className={styles.taskList}>
                         {filteredAndSortedTasks.map((task) => (
-                            <li key={task.id} className={styles.taskCard}>
-                                <div className={styles.taskHeader}>
-                                    <Link href={`/tasks/${task.id}`} className={styles.taskTitle}>
-                                        {task.title}
-                                    </Link>
-                                    <span className={getStatusClass(task.status)}>
-                                        {task.status}
-                                    </span>
-                                </div>
-                                <div className={styles.taskMeta}>
-                                    <span>Приоритет: <strong>{task.priority}</strong></span>
-                                    <span>•</span>
-                                    <span>Исполнитель: {task.assignee}</span>
-                                    <span>•</span>
-                                    <span>Дата: {new Date(task.createdAt).toLocaleDateString("ru-RU")}</span>
-                                </div>
-                            </li>
+                            <TaskCard key={task.id} task={task} />
                         ))}
                     </ul>
                 )}
             </section>
 
-            {/* Модальное окно с формой добавления */}
-            {isModalOpen && (
-                <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="modal-title">
-                    <div className={styles.modalContent}>
-                        <h2 id="modal-title">Новая задача</h2>
-                        <form onSubmit={handleCreateTask}>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="task-title">Название *</label>
-                                <input
-                                    id="task-title"
-                                    type="text"
-                                    required
-                                    value={formTitle}
-                                    onChange={(e) => setFormTitle(e.target.value)}
-                                />
-                            </div>
-
-                            <div className={styles.formGroup}>
-                                <label htmlFor="task-assignee">Исполнитель *</label>
-                                <input
-                                    id="task-assignee"
-                                    type="text"
-                                    required
-                                    value={formAssignee}
-                                    onChange={(e) => setFormAssignee(e.target.value)}
-                                />
-                            </div>
-
-                            <div className={styles.formGroup}>
-                                <label htmlFor="task-priority">Приоритет</label>
-                                <select
-                                    id="task-priority"
-                                    value={formPriority}
-                                    onChange={(e) => setFormPriority(e.target.value as "Низкий" | "Средний" | "Высокий")}
-                                >
-                                    <option value="Низкий">Низкий</option>
-                                    <option value="Средний">Средний</option>
-                                    <option value="Высокий">Высокий</option>
-                                </select>
-                            </div>
-
-                            <div className={styles.formGroup}>
-                                <label htmlFor="task-desc">Описание</label>
-                                <textarea
-                                    id="task-desc"
-                                    value={formDescription}
-                                    onChange={(e) => setFormDescription(e.target.value)}
-                                />
-                            </div>
-
-                            <div className={styles.formActions}>
-                                <button
-                                    type="button"
-                                    className={styles.cancelBtn}
-                                    onClick={() => setIsModalOpen(false)}
-                                    disabled={isSubmitting}
-                                >
-                                    Отмена
-                                </button>
-                                <button
-                                    type="submit"
-                                    className={styles.submitBtn}
-                                    disabled={isSubmitting}
-                                >
-                                    {isSubmitting ? "Сохранение..." : "Создать"}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+            <CreateTaskModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onCreate={handleCreateTask}
+            />
         </main>
     );
 }

@@ -1,0 +1,32 @@
+﻿@import "../../app/styles/variables.less";
+
+.controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+    background-color: var(--card-bg);
+    padding: 1.25rem;
+    border-radius: @border-radius;
+    border: 1px solid var(--border-color);
+}
+
+.filterGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+
+    label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    input, select {
+        padding: 0.6rem 0.8rem;
+        border: 1px solid var(--border-color);
+        border-radius: @border-radius;
+        background-color: var(--bg-color);
+        color: var(--text-primary);
+    }
+}
